@@ -199,7 +199,7 @@ def step_impl_access_magic_link(context):
         assert hash_value in token, f"Token doesn't contain expected hash: {hash_value}"
     
     # Verify the heading is "Meus Eventos"
-    assert context.login_page.verify_dashboard_heading(), "Dashboard heading 'Meus Eventos' not found"
+    assert context.login_page.verify_events_heading(), "Events heading 'Meus Eventos' not found"
     
     # Close the tab and return to the original login page
     context.login_page.close_tab_and_return_to_original()
@@ -207,8 +207,8 @@ def step_impl_access_magic_link(context):
     # Verify user's email is displayed on the original page
     assert context.login_page.verify_user_email_displayed(email), f"User email {email} not displayed on login page"
     
-    # Click the dashboard button
-    context.login_page.click_dashboard_button()
+    # Click the events button
+    context.login_page.click_events_button()
 
 
 @then('devo ver o token salvo no localStorage')
@@ -218,15 +218,16 @@ def step_impl_verify_token(context):
     pass
 
 
-@then('devo ser redirecionado para o dashboard')
+@then('devo ser redirecionado para os eventos')
 def step_impl_verify_redirect(context):
-    """Verify that the user is redirected to the dashboard and the 'Meus Eventos' heading is present."""
-    # Verify we're on the dashboard URL
-    is_redirected = context.login_page.is_redirected_to_dashboard()
-    assert is_redirected, "Not redirected to dashboard after authentication"
+    """Verify that the user is redirected to the events page and the 'Meus Eventos' heading is present.
+    """
+    # Verify we're on the events page URL
+    is_redirected = context.login_page.is_redirected_to_events_page()
+    assert is_redirected, "Not redirected to events page after authentication"
     
     # Verify the heading is still "Meus Eventos" after clicking the button in the previous step
-    assert context.login_page.verify_dashboard_heading(), "Dashboard heading 'Meus Eventos' not found after redirection"
+    assert context.login_page.verify_events_heading(), "Events heading 'Meus Eventos' not found after redirection"
 
 
 @then('devo ver uma mensagem de erro indicando o domínio obrigatório')

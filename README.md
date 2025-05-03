@@ -142,7 +142,7 @@ Feature: Autenticação com Magic Link
     And recebo o magic link da API
     And acesso o magic link
     Then devo ver o token salvo no localStorage
-    And devo ser redirecionado para o dashboard
+    And devo ser redirecionado para os eventos
 ```
 
 ## Pontos Importantes
@@ -155,7 +155,7 @@ Feature: Autenticação com Magic Link
 4. Sistema gera e envia magic link (simulado via API)
 5. Usuário acessa o magic link recebido
 6. Sistema autentica o usuário e salva token no localStorage
-7. Usuário é redirecionado para o dashboard
+7. Usuário é redirecionado para o event
 
 ### Interceptação de Resposta da API (CDP)
 

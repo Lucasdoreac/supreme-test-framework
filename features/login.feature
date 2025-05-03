@@ -11,7 +11,7 @@ Feature: Autenticação com Magic Link
     And recebo o magic link da API
     And acesso o magic link
     Then devo ver o token salvo no localStorage
-    And devo ser redirecionado para o dashboard
+    And devo ser redirecionado para os eventos
     
   @auth @login @validation
   Scenario: Validação de email com domínio obrigatório

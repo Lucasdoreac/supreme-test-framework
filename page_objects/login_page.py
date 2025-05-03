@@ -121,19 +121,19 @@ class LoginPage(BasePage):
             # Just check once without waiting
             return self.get_local_storage_item("token")
     
-    def is_redirected_to_dashboard(self) -> bool:
+    def is_redirected_to_events_page(self) -> bool:
         """
-        Check if user is redirected to dashboard after login
+        Check if user is redirected to events page after login
         
         Returns:
-            True if on dashboard page, False otherwise
+            True if on events page, False otherwise
         """
-        # Wait for redirect to dashboard (adjust URL pattern as needed)
+        # Wait for redirect to events page
         return self.wait_until_url_contains("/event/mine", 10)
         
-    def verify_dashboard_heading(self) -> bool:
+    def verify_events_heading(self) -> bool:
         """
-        Verify that the dashboard heading shows "Meus Eventos"
+        Verify that the events page heading shows "Meus Eventos"
         
         Returns:
             True if heading matches, False otherwise
@@ -174,9 +174,9 @@ class LoginPage(BasePage):
         except (TimeoutException, NoSuchElementException):
             return False
             
-    def click_dashboard_button(self) -> None:
+    def click_events_button(self) -> None:
         """
-        Click the button on the dashboard
+        Click the button on the events page
         """
         button_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/div/button")
         self.click_element(button_locator)
