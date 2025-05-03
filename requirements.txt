@@ -1,0 +1,24 @@
+# Selenium and WebDriver
+selenium==4.32.0
+webdriver-manager==4.0.0
+
+# BDD Testing
+behave==1.2.6
+behave-html-formatter==0.9.10
+pytest==7.4.0
+pytest-html==4.0.0
+pytest-xdist==3.3.1
+
+# Web Utilities
+requests==2.31.0
+beautifulsoup4==4.12.2
+
+# Utils
+python-dotenv==1.0.0
+black==23.7.0
+pytest-cov==4.1.0
+
+# Typing
+mypy==1.5.1
+types-requests==2.31.0.2
+types-selenium==3.141.9

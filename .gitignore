@@ -1,0 +1,52 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*$py.class
+
+# Package metadata
+*.egg-info/
+
+# Build & distribution
+build/
+dist/
+
+# Virtual environments
+.env
+.venv*/
+__pypackages__/
+tools/virtualenvs
+
+# Testing & coverage
+.coverage
+rerun.txt
+testrun*.json
+*.log
+pytest_cache/
+.tox/
+reports/
+screenshots/
+downloads/
+pretty.output
+
+# Documentation builds
+_build/
+*.rst
+./*.txt
+
+# Workspace files
+__WORKDIR__/
+_WORKSPACE/
+
+# Caches & temp files
+.cache/
+.direnv/
+.fleet/
+
+# Editor/IDE
+.idea/
+.vscode/
+
+# Other
+.done.*
+.DS_Store

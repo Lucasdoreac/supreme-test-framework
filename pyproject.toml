@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "labtech-qa"
+version = "0.1.0"
+description = ""
+authors = ["Danrley Pereira <danrleywillian@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+selenium = "^4.32.0"
+behave = "^1.2.6"
+requests = "^2.32.3"
+python-dotenv = "^1.1.0"
+webdriver-manager = "^4.0.2"
+behave-html-formatter = "^0.9.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
