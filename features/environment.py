@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 from utils.browser_setup import setup_webdriver
 from utils.helpers import take_screenshot, get_browser_logs
+from utils.auth_helpers import ensure_authenticated
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,6 +46,18 @@ def before_scenario(context, scenario):
     
     # Store the scenario name for later use
     context.scenario_name = scenario.name
+    
+    # Check if scenario requires authentication
+    requires_auth = any(tag in ['auth', 'event', 'authenticated'] for tag in scenario.tags)
+    
+    # Perform authentication if needed
+    if requires_auth:
+        logger.info("Scenario requires authentication, ensuring user is logged in...")
+        ensure_authenticated(context)
+
+    # if 'requires_login' in scenario.tags:
+    #     # Realizar o login
+    #     perform_login(context)
 
 
 def after_scenario(context, scenario):
