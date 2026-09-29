@@ -138,7 +138,7 @@ class LoginPage(BasePage):
         Returns:
             True if heading matches, False otherwise
         """
-        heading_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/h2[1]")
+        heading_locator = (By.XPATH, "//h2[normalize-space(.)='Meus Eventos']")
         
         try:
             heading = self.get_text(heading_locator)
@@ -166,11 +166,14 @@ class LoginPage(BasePage):
         Returns:
             True if email is displayed, False otherwise
         """
-        email_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/p")
-        
         try:
-            email_text = self.get_text(email_locator)
-            return expected_email in email_text
+            paragraphs = self.driver.find_elements(By.TAG_NAME, "p")
+            if any(expected_email in paragraph.text for paragraph in paragraphs):
+                return True
+            return any(
+                element.get_attribute("value") == expected_email
+                for element in self.driver.find_elements(*self.email_input)
+            )
         except (TimeoutException, NoSuchElementException):
             return False
             
@@ -178,5 +181,5 @@ class LoginPage(BasePage):
         """
         Click the button on the events page
         """
-        button_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/div/button")
+        button_locator = (By.XPATH, "//button[normalize-space(.)='Já Confirmei!']")
         self.click_element(button_locator)

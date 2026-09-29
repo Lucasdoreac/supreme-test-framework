@@ -2,9 +2,7 @@ import os
 import logging
 from typing import Dict, Any, Optional
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -109,12 +107,14 @@ def setup_webdriver(download_dir: Optional[str] = None) -> webdriver.Chrome:
         }
         options.add_experimental_option('prefs', prefs)
     
-    # Initialize WebDriver
+    # Use an existing Selenium Grid when running tests from a separate container.
     try:
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=options
-        )
+        remote_url = os.getenv('SELENIUM_REMOTE_URL')
+        if remote_url:
+            driver = webdriver.Remote(command_executor=remote_url, options=options)
+        else:
+            # Selenium Manager bundled with Selenium locates or installs the driver.
+            driver = webdriver.Chrome(options=options)
         
         # Set default timeout
         page_load_timeout = int(os.getenv('PAGE_LOAD_TIMEOUT', '30'))

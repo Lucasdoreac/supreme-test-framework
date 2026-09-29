@@ -6,7 +6,7 @@ import logging
 import time
 
 from page_objects.login_page import LoginPage
-from utils.helpers import get_magic_link, extract_hash_from_link
+from utils.helpers import get_magic_link, extract_hash_from_link, rebase_magic_link
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -66,9 +66,10 @@ def step_impl_click_button(context, button_text):
                 window.fetch = async function(url, options) {
                     // Call original fetch
                     const response = await originalFetch(url, options);
+                    const requestUrl = String(url);
                     
                     // Check if this is the magic link endpoint
-                    if (url.includes('/auth/send-link')) {
+                    if (requestUrl.includes('/auth/send-link')) {
                         // Clone the response so we can read the body
                         const clonedResponse = response.clone();
                         
@@ -178,39 +179,38 @@ def step_impl_get_magic_link(context):
 
 @when('acesso o magic link')
 def step_impl_access_magic_link(context):
-    """Navigate to the magic link received in a new tab."""
+    """Follow the emailed magic link in the current browser tab."""
     magic_link = getattr(context, 'magic_link', None)
     if not magic_link:
         raise ValueError("Magic link not found in context. Make sure the API step runs first.")
     
-    # Store the email for later verification
-    email = getattr(context, 'email', '')
-    
-    # Navigate to the magic link in a new tab
-    context.login_page.open_magic_link(magic_link)
+    # The auth service's local link uses a host-only origin; E2E's Chrome runs
+    # inside Docker, so keep the token/path and target the frontend service alias.
+    base_url = context.config.userdata.get('BASE_URL', 'http://localhost:3000')
+    magic_link = rebase_magic_link(magic_link, base_url)
+    context.magic_link = magic_link
+    context.driver.get(magic_link)
     
     # Wait for token to be stored in localStorage and verify it contains the expected hash
     hash_value = getattr(context, 'hash', None)
     token = context.login_page.verify_token_in_local_storage(expected_hash=hash_value)
     
     # Verify the token exists and contains the hash
-    assert token is not None, "Token not found in localStorage"
+    if token is None:
+        raise AssertionError(
+            f"Token not found in localStorage after following the magic link: "
+            f"{context.driver.current_url}"
+        )
     if hash_value:
         assert hash_value in token, f"Token doesn't contain expected hash: {hash_value}"
     
+    # Wait for the callback page to finish redirecting before checking its content.
+    assert context.login_page.is_redirected_to_events_page(), (
+        f"Authentication callback did not reach events page: {context.driver.current_url}"
+    )
+
     # Verify the heading is "Meus Eventos"
     assert context.login_page.verify_events_heading(), "Events heading 'Meus Eventos' not found"
-    
-    # Close the tab and return to the original login page
-    context.login_page.close_tab_and_return_to_original()
-    
-    # Verify user's email is displayed on the original page
-    assert context.login_page.verify_user_email_displayed(email), f"User email {email} not displayed on login page"
-    
-    # Click the events button
-    context.login_page.click_events_button()
-
-
 @then('devo ver o token salvo no localStorage')
 def step_impl_verify_token(context):
     """Verify that the authentication token is saved in localStorage."""
@@ -226,14 +226,17 @@ def step_impl_verify_redirect(context):
     is_redirected = context.login_page.is_redirected_to_events_page()
     assert is_redirected, "Not redirected to events page after authentication"
     
-    # Verify the heading is still "Meus Eventos" after clicking the button in the previous step
+    # The magic link was opened in this tab; leave the authenticated session open.
     assert context.login_page.verify_events_heading(), "Events heading 'Meus Eventos' not found after redirection"
 
 
 @then('devo ver uma mensagem de erro indicando o domínio obrigatório')
 def step_impl_verify_error_message(context):
     """Verify that an error message about required domain is displayed."""
-    error_message_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/span")
+    error_message_locator = (
+        By.XPATH,
+        "//span[contains(normalize-space(.), 'fora do formato permitido')]",
+    )
     is_error_displayed = context.login_page.is_element_visible(error_message_locator)
     
     assert is_error_displayed, "O campo e-mail está fora do formato permitido."

@@ -5,6 +5,7 @@ import logging
 import requests
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
+from urllib.parse import urlsplit, urlunsplit
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import WebDriverException, TimeoutException
 
@@ -62,6 +63,9 @@ def get_browser_logs(driver: WebDriver) -> list:
     Returns:
         List of formatted log entries
     """
+    if not hasattr(driver, 'get_log'):
+        logger.debug("Browser logs are unavailable from this WebDriver session")
+        return []
     try:
         logs = driver.get_log('browser')
         return [f"{log['level']}: {log['message']}" for log in logs]
@@ -84,12 +88,11 @@ def get_magic_link(email: str) -> Optional[str]:
     
     try:
         response = requests.post(
-            api_url, 
-            json={"email": email},
-            headers={"Content-Type": "application/json"}
+            api_url,
+            params={"email": email},
         )
-        
-        if response.status_code == 200:
+
+        if response.status_code in (200, 201):
             data = response.json()
             magic_link = data.get("magic_link")
             logger.info(f"Received magic link for {email}")
@@ -169,3 +172,12 @@ def extract_hash_from_link(link: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Error extracting hash from link: {str(e)}")
         return None
+
+
+def rebase_magic_link(link: str, base_url: str) -> str:
+    """Keep the API-issued callback path and token, but use the test browser's frontend origin."""
+    link_parts = urlsplit(link)
+    base_parts = urlsplit(base_url if "://" in base_url else f"http://{base_url}")
+    if not link_parts.scheme or not link_parts.netloc or not base_parts.scheme or not base_parts.netloc:
+        raise ValueError("Magic link and frontend base URL must be absolute URLs")
+    return urlunsplit((base_parts.scheme, base_parts.netloc, link_parts.path, link_parts.query, link_parts.fragment))
