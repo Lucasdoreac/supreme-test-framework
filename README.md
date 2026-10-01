@@ -8,7 +8,8 @@ Este projeto implementa uma suíte de testes automatizados para o fluxo de auten
 
 ## Requisitos
 
-- Python 3.8+
+- Python 3.14.7+
+- Poetry 2.4.1
 - Google Chrome
 - Aplicação React rodando em: `localhost:3000`
 - API de autenticação rodando em: `http://localhost:5000`
@@ -35,7 +36,8 @@ project/
     helpers.py
   .env
   behave.ini
-  requirements.txt
+  pyproject.toml
+  poetry.lock
   README.md
 ```
 
@@ -48,13 +50,8 @@ project/
 git clone <repository-url>
 cd project
 
-# Criar e ativar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# Instalar dependências
-pip install -r requirements.txt
+# Instalar as dependências fixadas pelo lockfile
+poetry install --no-interaction --no-ansi --no-root
 ```
 
 ### 2. Configuração
@@ -74,33 +71,33 @@ WINDOW_HEIGHT=1080
 ### Todos os Testes
 
 ```bash
-behave
+poetry run behave
 ```
 
 ### Filtrar por Tags
 
 ```bash
 # Executar apenas testes de autenticação
-behave --tags=@auth
+poetry run behave --tags=@auth
 
 # Executar testes de login
-behave --tags=@login
+poetry run behave --tags=@login
 
 # Executar testes de validação
-behave --tags=@validation
+poetry run behave --tags=@validation
 ```
 
 ### Teste Específico
 
 ```bash
 # Executar apenas o arquivo login.feature
-behave features/login.feature
+poetry run behave features/login.feature
 ```
 
 ### Gerar Relatório HTML
 
 ```bash
-behave -f html -o reports/test_report.html
+poetry run behave -f html -o reports/test_report.html
 ```
 
 ## Arquitetura
@@ -187,7 +184,7 @@ Os logs do console do navegador são capturados e exibidos no log do Behave para
 
 ### WebDriver não encontrado
 
-Verifique se o Chrome está instalado e atualizado. O `webdriver-manager` deve baixar automaticamente o driver compatível.
+Verifique se o Chrome está instalado e atualizado. O Selenium Manager, incluído no Selenium, localiza ou obtém o driver compatível.
 
 ### Timeout nas Esperas
 

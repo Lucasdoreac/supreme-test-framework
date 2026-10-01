@@ -33,21 +33,3 @@ jobs:
           poetry run python -m unittest discover -s tests -v
           poetry run python -c "from utils.browser_setup import setup_webdriver; assert callable(setup_webdriver)"
           poetry run behave --dry-run --no-color
-
-  requirements-pins:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.14.7"
-      - name: Install pinned requirements
-        run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Check dependency consistency
-        run: python -m pip check
-      - name: Compile and discover Behave scenarios
-        run: |
-          python -m compileall -q features page_objects utils
-          python -m unittest discover -s tests -v
-          python -c "from utils.browser_setup import setup_webdriver; assert callable(setup_webdriver)"
-          behave --dry-run --no-color
