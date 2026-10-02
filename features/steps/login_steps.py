@@ -191,9 +191,10 @@ def step_impl_access_magic_link(context):
     context.magic_link = magic_link
     context.driver.get(magic_link)
     
-    # Wait for token to be stored in localStorage and verify it contains the expected hash
+    # The link is single use: the app trades it for a session token, so wait for a
+    # stored token that is NOT the link's hash.
     hash_value = getattr(context, 'hash', None)
-    token = context.login_page.verify_token_in_local_storage(expected_hash=hash_value)
+    token = context.login_page.wait_for_session_token()
     
     # Verify the token exists and contains the hash
     if token is None:
@@ -202,7 +203,7 @@ def step_impl_access_magic_link(context):
             f"{context.driver.current_url}"
         )
     if hash_value:
-        assert hash_value in token, f"Token doesn't contain expected hash: {hash_value}"
+        assert hash_value not in token, "The stored token must be a session token, not the single-use link"
     
     # Wait for the callback page to finish redirecting before checking its content.
     assert context.login_page.is_redirected_to_events_page(), (

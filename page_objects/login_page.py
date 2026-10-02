@@ -91,6 +91,21 @@ class LoginPage(BasePage):
         # Navigate to the magic link in the new tab
         self.navigate_to(link)
     
+    def wait_for_session_token(self, max_wait: int = 10) -> Optional[str]:
+        """Wait until the app stores a session token and return it.
+
+        The e-mailed link is single use: the app trades it for a session token,
+        so the stored token is a different value than the link's hash.
+        """
+        import time
+        deadline = time.time() + max_wait
+        while time.time() < deadline:
+            token = self.get_local_storage_item("token")
+            if token:
+                return token
+            time.sleep(0.5)
+        return self.get_local_storage_item("token") or None
+
     def verify_token_in_local_storage(self, expected_hash: Optional[str] = None, 
                                    max_wait: int = 10) -> Optional[str]:
         """
