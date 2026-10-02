@@ -8,6 +8,14 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from .base_page import BasePage
 
 
+# The heading is an <h2> in the current Web and an <h1 class="h2"> once the page
+# gets a single h1 per route, so both are accepted.
+EVENTS_HEADING_LOCATOR = (
+    By.XPATH,
+    "//*[(self::h1 or self::h2) and normalize-space(.)='Meus Eventos']",
+)
+
+
 class LoginPage(BasePage):
     """Page object for the login page"""
     
@@ -24,7 +32,6 @@ class LoginPage(BasePage):
         self.email_input = (By.NAME, "email")
         self.submit_button = (By.CSS_SELECTOR, "button[type='submit']")
         self.email_error = (By.CSS_SELECTOR, ".error-message")
-        self.loading_indicator = (By.CSS_SELECTOR, ".loading-spinner")
     
     def enter_email(self, email: str) -> None:
         """
@@ -38,15 +45,6 @@ class LoginPage(BasePage):
     def click_next(self) -> None:
         """Click the Next/Submit button on the login form"""
         self.click_element(self.submit_button)
-        
-        # Wait for loading indicator to disappear if present
-        try:
-            WebDriverWait(self.driver, 5).until_not(
-                EC.visibility_of_element_located(self.loading_indicator)
-            )
-        except TimeoutException:
-            # Continue if loading indicator isn't found
-            pass
     
     def verify_email_validation(self) -> bool:
         """
@@ -168,10 +166,8 @@ class LoginPage(BasePage):
         Returns:
             True if heading matches, False otherwise
         """
-        heading_locator = (By.XPATH, "//h2[normalize-space(.)='Meus Eventos']")
-        
         try:
-            heading = self.get_text(heading_locator)
+            heading = self.get_text(EVENTS_HEADING_LOCATOR)
             return heading == "Meus Eventos"
         except (TimeoutException, NoSuchElementException):
             return False

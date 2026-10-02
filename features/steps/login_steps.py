@@ -8,6 +8,13 @@ import time
 from page_objects.login_page import LoginPage
 from utils.helpers import get_magic_link, extract_hash_from_link, rebase_magic_link
 
+# The error is a <span> in the current Web and <p id="organizer-email-error"
+# role="alert"> once the field is labelled; accept either element.
+DOMAIN_ERROR_LOCATOR = (
+    By.XPATH,
+    "//*[(self::span or @role='alert') and contains(normalize-space(.), 'fora do formato permitido')]",
+)
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -237,10 +244,7 @@ def step_impl_verify_redirect(context):
 @then('devo ver uma mensagem de erro indicando o domínio obrigatório')
 def step_impl_verify_error_message(context):
     """Verify that an error message about required domain is displayed."""
-    error_message_locator = (
-        By.XPATH,
-        "//span[contains(normalize-space(.), 'fora do formato permitido')]",
-    )
+    error_message_locator = DOMAIN_ERROR_LOCATOR
     is_error_displayed = context.login_page.is_element_visible(error_message_locator)
     
     assert is_error_displayed, "O campo e-mail está fora do formato permitido."
