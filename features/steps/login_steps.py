@@ -190,7 +190,10 @@ def step_impl_access_magic_link(context):
     magic_link = rebase_magic_link(magic_link, base_url)
     context.magic_link = magic_link
     context.driver.get(magic_link)
-    
+
+    # Opening the link must not log anyone in by itself: click "Entrar".
+    context.login_page.click_enter_on_callback()
+
     # The link is single use: the app trades it for a session token, so wait for a
     # stored token that is NOT the link's hash.
     hash_value = getattr(context, 'hash', None)

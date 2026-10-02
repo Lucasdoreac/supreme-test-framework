@@ -32,7 +32,9 @@ class SingleUseLinkTests(unittest.TestCase):
         )
 
     def test_accepts_a_session_token_that_differs_from_the_link(self):
-        step_impl_access_magic_link(self.make_context("S" * 43))
+        context = self.make_context("S" * 43)
+        step_impl_access_magic_link(context)
+        context.login_page.click_enter_on_callback.assert_called_once()
 
     def test_rejects_a_stored_token_equal_to_the_single_use_link(self):
         with self.assertRaises(AssertionError):

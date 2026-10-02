@@ -91,6 +91,21 @@ class LoginPage(BasePage):
         # Navigate to the magic link in the new tab
         self.navigate_to(link)
     
+    def click_enter_on_callback(self, max_wait: int = 15) -> None:
+        """Click "Entrar" on the callback page.
+
+        The page does not spend the single-use link on load (mail scanners open
+        links before people do); the exchange runs when the button is clicked.
+        """
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        button = WebDriverWait(self.driver, max_wait).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[.//b[normalize-space()='Entrar']]"))
+        )
+        button.click()
+
     def wait_for_session_token(self, max_wait: int = 10) -> Optional[str]:
         """Wait until the app stores a session token and return it.
 
