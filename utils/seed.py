@@ -110,6 +110,7 @@ def delete_events(event_ids) -> int:
     kept = [str(e["_id"]) for e in db.events.find(owned, {"_id": 1})]
     db.reservations.delete_many({"eventId": {"$in": kept}})
     db.pdfs.delete_many({"eventId": {"$in": kept}})  # the PDF a submitted lecture generates
+    db.send_email.delete_many({"eventId": {"$in": kept}})  # the approval links issued for the event
     return db.events.delete_many(owned).deleted_count
 
 
@@ -118,3 +119,31 @@ def account_events(email: str) -> dict:
     assert_isolated_account(email)
     query = {"organizer.email": {"$regex": f"^{re.escape(isolated_account())}$", "$options": "i"}}
     return {str(e["_id"]): e.get("status") for e in _db().events.find(query, {"status": 1})}
+
+
+def any_room_id() -> str:
+    """Id of a room already in the local catalog, for scenarios that submit a real reservation."""
+    room = _db().rooms.find_one({}, {"_id": 1})
+    assert room, "the local database has no room to reserve"
+    return str(room["_id"])
+
+
+def coordination_link_token(event_id: str, action: str) -> str:
+    """The active token the Coordenação's e-mail carries for ``action`` on ``event_id`` (the e-mail is a dry run)."""
+    record = _db().send_email.find_one({"eventId": event_id, "step": 0, "action": action, "active": True})
+    assert record, f"no active '{action}' link was issued for event {event_id}"
+    return record["tokenId"]
+
+
+def event_state(event_id: str) -> dict:
+    """Status of the event and how many reservations it holds."""
+    db = _db()
+    event = db.events.find_one({"_id": ObjectId(event_id)}, {"status": 1})
+    return {"status": (event or {}).get("status"), "reservations": db.reservations.count_documents({"eventId": event_id})}
+
+
+def any_course_id() -> str:
+    """Id of a course already in the local catalog, so the Coordenação's e-mail can look its coordinator up."""
+    course = _db().courses.find_one({}, {"_id": 1})
+    assert course, "the local database has no course"
+    return str(course["_id"])

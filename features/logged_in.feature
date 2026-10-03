@@ -75,6 +75,18 @@ Feature: Telas logadas
     And a tela de login deve avisar que o encerramento não foi confirmado
     And o Auth volta ao ar
 
+  # API #80/#81 e Web #51: o pedido de alterações da Coordenação vai do link do e-mail ao aviso em Meus Eventos,
+  # e o reenvio volta a aguardar a Coordenação sem duplicar a reserva. Roda contra a API que tem o #80.
+  @drafts @change-flow
+  Scenario: A Coordenação pede alterações pelo link e o organizador vê o motivo e reenvia
+    Given que estou logado como "e2e-ci@udf.edu.br"
+    And a conta isolada não tem pedido em andamento
+    And envio um pedido real e a Coordenação pede alterações pelo link do e-mail com o motivo "Trocar a sala <b>agora</b> e informar o número de inscritos."
+    When abro Meus Eventos
+    Then devo ver o aviso de alterações com o motivo como texto
+    When reenvio o pedido corrigido
+    Then o pedido volta a aguardar a Coordenação com uma única reserva
+
   # Web #43: Enter no campo de e-mail envia o formulário (antes só o clique no botão enviava). O e-mail de outro
   # domínio mostra o erro de validação sem pedir link, então não gasta o limite de pedidos do Auth.
   @drafts @enter
