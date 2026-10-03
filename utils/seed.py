@@ -37,16 +37,25 @@ def assert_local_uri(uri: str) -> None:
 
 
 def isolated_account() -> str:
-    """The one address the suite logs in with: TEST_EMAIL (as the login steps read it), else the default."""
-    return (os.getenv("TEST_EMAIL") or DEFAULT_ISOLATED_ACCOUNT).strip().casefold()
+    """The only account the seed may write for: pinned, never taken from the environment."""
+    return DEFAULT_ISOLATED_ACCOUNT
+
+
+def assert_suite_account_is_the_isolated_one() -> None:
+    """Refuse to seed or delete when the run logs in with another account (TEST_EMAIL differs)."""
+    configured = (os.getenv("TEST_EMAIL") or DEFAULT_ISOLATED_ACCOUNT).strip().casefold()
+    if configured != DEFAULT_ISOLATED_ACCOUNT:
+        raise UnsafeSeedTarget(
+            "refusing to seed: TEST_EMAIL is not the isolated E2E account the seed is pinned to")
 
 
 def is_isolated_account(email) -> bool:
-    """Exact, case-insensitive match with the suite's address; never a prefix or a pattern."""
+    """Exact, case-insensitive match with the pinned address; never a prefix or a pattern."""
     return isinstance(email, str) and email.strip().casefold() == isolated_account()
 
 
 def assert_isolated_account(email: str) -> None:
+    assert_suite_account_is_the_isolated_one()
     if not is_isolated_account(email):
         raise UnsafeSeedTarget("refusing to seed for an account that is not the suite's isolated E2E account")
 
@@ -90,6 +99,7 @@ def seed_requested_change_event(email: str, message: str) -> str:
 
 
 def delete_events(event_ids) -> int:
+    assert_suite_account_is_the_isolated_one()
     ids = [ObjectId(i) for i in event_ids]
     if not ids:
         return 0

@@ -48,12 +48,23 @@ class SeedTargetGuardTests(unittest.TestCase):
                     seed.seed_requested_change_event(email, "x")
             client.assert_not_called()
 
-    def test_the_account_is_the_one_the_login_steps_use(self):
-        with patch.dict(os.environ, {"TEST_EMAIL": "Outra-Conta@udf.edu.br"}), patch("utils.seed.MongoClient") as client:
-            with self.assertRaises(UnsafeSeedTarget):
-                seed.seed_requested_change_event("e2e-ci@udf.edu.br", "x")
-            client.assert_not_called()
-            self.assertTrue(seed.is_isolated_account("outra-conta@UDF.edu.br"))
+    def test_the_seed_is_pinned_to_the_isolated_account_whatever_test_email_says(self):
+        for other in ("Outra-Conta@udf.edu.br", "pessoa@udf.edu.br"):
+            with patch.dict(os.environ, {"TEST_EMAIL": other, "E2E_MONGO_URI": "mongodb://mongo:27017"}), \
+                    patch("utils.seed.MongoClient") as client:
+                for email in (other, "e2e-ci@udf.edu.br"):       # neither the other account nor the pinned one
+                    with self.assertRaises(UnsafeSeedTarget, msg=f"{other} / {email}"):
+                        seed.seed_requested_change_event(email, "x")
+                with self.assertRaises(UnsafeSeedTarget):
+                    seed.delete_events(["507f1f77bcf86cd799439011"])
+                client.assert_not_called()
+                self.assertFalse(seed.is_isolated_account(other))
+
+    def test_a_test_email_equal_to_the_pinned_account_is_fine_in_any_case(self):
+        with patch.dict(os.environ, {"TEST_EMAIL": "E2E-CI@udf.edu.br", "E2E_MONGO_URI": "mongodb://mongo:27017"}), \
+                patch("utils.seed.MongoClient") as client:
+            seed.seed_requested_change_event("e2e-ci@udf.edu.br", "x")
+            client.return_value.__getitem__.return_value.events.insert_one.assert_called_once()
 
     def test_the_match_ignores_case_only(self):
         with patch.dict(os.environ, {}) as env:
