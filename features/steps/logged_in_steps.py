@@ -1,7 +1,9 @@
 import logging
 import os
+import time
 from urllib.parse import urlparse
 
+import requests
 from behave import given, when, then
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -131,3 +133,26 @@ def step_edit_flow(context):
     event_id = context.seeded_event_ids[-1]
     wait(context, lambda d: "/event/type-selection" in d.current_url and f"eventId={event_id}" in d.current_url,
          message=f"not in the edit flow of {event_id}: {context.driver.current_url}")
+
+
+@given("guardo o token e o e-mail da sessão")
+def step_keep_session(context):
+    context.kept_session = {"token": stored(context, "token"), "email": stored(context, "userEmail")}
+    assert context.kept_session["token"] and context.kept_session["email"], "no session to keep"
+
+
+@then("a API deve recusar o token guardado")
+def step_api_refuses_kept_token(context):
+    """After Sair the server itself must reject the old token (not only the browser forget it)."""
+    api = context.config.userdata.get("API_URL", "http://localhost:5000")
+    kept = context.kept_session
+    headers = {"token": kept["token"], "email": kept["email"]}
+    # the logout call is made by the app before it navigates; give the Auth a moment to settle
+    status = None
+    for _ in range(10):
+        status = requests.get(f"{api}/auth/validate", headers=headers, timeout=15).status_code
+        if status == 403:
+            break
+        time.sleep(0.5)
+    _SESSION.clear()  # the shared session is gone for later scenarios, which must log in again
+    assert status == 403, f"the API still accepts the old session token (status {status})"

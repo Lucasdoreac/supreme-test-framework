@@ -6,14 +6,6 @@ Feature: Telas logadas
   Eu quero sair, acompanhar as etapas do pedido e ver o que a Coordenação pediu
   Para usar o sistema sem ficar perdido
 
-  @drafts @logout
-  Scenario: Sair encerra a sessão
-    Given que estou logado como "e2e-ci@udf.edu.br"
-    When clico em "Sair"
-    Then devo ser levado para a página "/organizer"
-    And a sessão não deve mais existir no localStorage
-    And uma rota privada deve me mandar embora ao abri-la
-
   @drafts @steps
   Scenario Outline: O indicador mostra em que etapa do pedido estou
     Given que estou logado como "e2e-ci@udf.edu.br"
@@ -37,3 +29,14 @@ Feature: Telas logadas
     Then devo ver o aviso de alterações com o motivo como texto
     When clico em "Corrigir e reenviar"
     Then devo estar no fluxo de edição do evento semeado
+
+  # Último de propósito: encerra no servidor a sessão que os outros cenários reaproveitam.
+  @drafts @logout
+  Scenario: Sair encerra a sessão no navegador e no servidor
+    Given que estou logado como "e2e-ci@udf.edu.br"
+    And guardo o token e o e-mail da sessão
+    When clico em "Sair"
+    Then devo ser levado para a página "/organizer"
+    And a sessão não deve mais existir no localStorage
+    And a API deve recusar o token guardado
+    And uma rota privada deve me mandar embora ao abri-la
