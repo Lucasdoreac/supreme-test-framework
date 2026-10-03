@@ -87,6 +87,19 @@ poetry run behave --tags=@login
 poetry run behave --tags=@validation
 ```
 
+### Cenários dos Drafts com duas abas ou serviço fora do ar (`@drafts`)
+
+Rodam só com `--tags=drafts`, contra um Web que tenha os Drafts, e só no Docker local com conta isolada:
+
+- Duas abas (#47): a etapa de logística abre em duas janelas do mesmo navegador. O Web usa `navigator.locks`,
+  que só existe em contexto seguro; na rede Docker em HTTP, `E2E_TREAT_ORIGIN_AS_SECURE=<origem do Web>` faz o
+  Chrome tratar essa origem como segura (em Production o HTTPS já basta).
+- API ou Auth fora do ar (#42, #53): os cenários param o serviço pelo socket do Docker. Exige
+  `E2E_ALLOW_SERVICE_CONTROL=1`, o socket montado no runner e `E2E_COMPOSE_PROJECT=<projeto Compose>`; só `api` e
+  `auth` desse projeto podem ser parados, e o `after_scenario` sempre os religa.
+- O que o cenário cria pela UI (rascunhos, pedido enviado, reserva, PDF) é removido por id ao final; o Mongo tem de
+  ser o local (`E2E_MONGO_URI`).
+
 ### Teste Específico
 
 ```bash

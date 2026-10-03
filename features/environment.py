@@ -70,6 +70,23 @@ def after_scenario(context, scenario):
             logger.info(f"Removed {delete_events(seeded)} seeded event(s)")
             context.seeded_event_ids = []
 
+    def remove_created():
+        # Events the scenario created through the UI (drafts, submitted requests): everything the
+        # isolated account owns now that it did not own when the scenario recorded its baseline.
+        baseline = getattr(context, "event_baseline", None)
+        if baseline is not None:
+            from utils.seed import account_events, delete_events
+            created = [i for i in account_events(context.email) if i not in baseline]
+            logger.info(f"Removed {delete_events(created)} event(s) created by the scenario")
+            context.event_baseline = None
+
+    def restart_services():
+        # A scenario that stopped the API or the Auth must never leave them down for the next one.
+        for service in list(getattr(context, "stopped_services", [])):
+            from utils import service_control
+            service_control.restart(service, context.config.userdata['API_URL'])
+            context.stopped_services.remove(service)
+
     def browser_logs():
         for log in get_browser_logs(context.driver) or []:
             logger.info(f"Browser log: {log}")
@@ -88,7 +105,9 @@ def after_scenario(context, scenario):
         del context.driver
         driver.quit()
 
+    step("restart stopped services", restart_services)
     step("remove seeded events", remove_seeded)
+    step("remove created events", remove_created)
     if getattr(context, 'driver', None):
         step("browser logs", browser_logs)
         step("failure screenshot", failure_screenshot)

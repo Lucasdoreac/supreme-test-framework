@@ -109,4 +109,12 @@ def delete_events(event_ids) -> int:
              "organizer.email": {"$regex": f"^{re.escape(isolated_account())}$", "$options": "i"}}
     kept = [str(e["_id"]) for e in db.events.find(owned, {"_id": 1})]
     db.reservations.delete_many({"eventId": {"$in": kept}})
+    db.pdfs.delete_many({"eventId": {"$in": kept}})  # the PDF a submitted lecture generates
     return db.events.delete_many(owned).deleted_count
+
+
+def account_events(email: str) -> dict:
+    """Events of the isolated account as {id: status}, to compare before and after a scenario."""
+    assert_isolated_account(email)
+    query = {"organizer.email": {"$regex": f"^{re.escape(isolated_account())}$", "$options": "i"}}
+    return {str(e["_id"]): e.get("status") for e in _db().events.find(query, {"status": 1})}

@@ -71,6 +71,14 @@ def setup_chrome_options() -> Options:
         # In other environments, use headless mode
         options.add_argument('--headless')
     
+    # The Web uses navigator.locks, which exists only in a secure context (HTTPS or localhost). Production is
+    # HTTPS; on the plain-HTTP Docker network the run names the origin to treat as secure, so the browser
+    # behaves as it does there. Without it the app falls back to the button-only single flight.
+    secure_origin = os.getenv('E2E_TREAT_ORIGIN_AS_SECURE', '')
+    if secure_origin:
+        options.add_argument(f'--unsafely-treat-insecure-origin-as-secure={secure_origin}')
+        options.add_argument('--user-data-dir=/tmp/e2e-chrome-profile')
+
     # Enable browser console logs
     options.set_capability('goog:loggingPrefs', {'browser': 'ALL', 'performance': 'ALL'})
     
