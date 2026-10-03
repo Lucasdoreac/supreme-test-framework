@@ -14,7 +14,7 @@ from pymongo.uri_parser import parse_uri
 # Seeding writes straight to Mongo, so it refuses anything that is not the local stack's database
 # and anything that is not the isolated E2E account: one wrong variable must not reach Atlas.
 LOCAL_HOSTS = frozenset({"mongo", "localhost", "127.0.0.1"})
-ISOLATED_ACCOUNT = re.compile(r"^e2e-ci[A-Za-z0-9._+-]*@[A-Za-z0-9.-]+$")
+DEFAULT_ISOLATED_ACCOUNT = "e2e-ci@udf.edu.br"
 
 
 class UnsafeSeedTarget(RuntimeError):
@@ -22,9 +22,7 @@ class UnsafeSeedTarget(RuntimeError):
 
 
 def assert_local_uri(uri: str) -> None:
-    """Refuse a URI unless every host is the local stack's (E2E_ALLOW_REMOTE_SEED=1 overrides, and nothing sets it)."""
-    if os.getenv("E2E_ALLOW_REMOTE_SEED") == "1":
-        return
+    """Refuse a URI unless every host is the local stack's. There is no override: no remote seeding is supported."""
     try:
         parsed = parse_uri(uri, validate=False)
     except Exception as error:  # an unparsable URI is not a local one
@@ -38,9 +36,19 @@ def assert_local_uri(uri: str) -> None:
             f"refusing to seed host(s) {remote or sorted(hosts)}: only {sorted(LOCAL_HOSTS)} are allowed")
 
 
+def isolated_account() -> str:
+    """The one address the suite logs in with: TEST_EMAIL (as the login steps read it), else the default."""
+    return (os.getenv("TEST_EMAIL") or DEFAULT_ISOLATED_ACCOUNT).strip().casefold()
+
+
+def is_isolated_account(email) -> bool:
+    """Exact, case-insensitive match with the suite's address; never a prefix or a pattern."""
+    return isinstance(email, str) and email.strip().casefold() == isolated_account()
+
+
 def assert_isolated_account(email: str) -> None:
-    if not isinstance(email, str) or not ISOLATED_ACCOUNT.match(email):
-        raise UnsafeSeedTarget("refusing to seed for an account that is not the isolated E2E one (e2e-ci@...)")
+    if not is_isolated_account(email):
+        raise UnsafeSeedTarget("refusing to seed for an account that is not the suite's isolated E2E account")
 
 
 def _db():
@@ -87,7 +95,8 @@ def delete_events(event_ids) -> int:
         return 0
     db = _db()
     # by id AND only events of the isolated account, so a stray id can never remove someone's event
-    owned = {"_id": {"$in": ids}, "organizer.email": {"$regex": ISOLATED_ACCOUNT.pattern}}
+    owned = {"_id": {"$in": ids},
+             "organizer.email": {"$regex": f"^{re.escape(isolated_account())}$", "$options": "i"}}
     kept = [str(e["_id"]) for e in db.events.find(owned, {"_id": 1})]
     db.reservations.delete_many({"eventId": {"$in": kept}})
     return db.events.delete_many(owned).deleted_count

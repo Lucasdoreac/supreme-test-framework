@@ -48,36 +48,55 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    """Run after each scenario."""
-    # Remove only what this scenario seeded, by id (see utils/seed.py).
-    seeded = getattr(context, "seeded_event_ids", [])
-    if seeded:
-        from utils.seed import delete_events
-        logger.info(f"Removed {delete_events(seeded)} seeded event(s)")
-        context.seeded_event_ids = []
+    """Run after each scenario.
 
-    # Capture browser logs
-    logs = get_browser_logs(context.driver)
-    if logs:
-        for log in logs:
+    Every cleanup step runs on its own: a failure is logged by class and the next step still runs, so a
+    broken seed cleanup cannot leave the browser open. If any step failed the scenario ends in error.
+    """
+    failures = []
+
+    def step(name, action):
+        try:
+            action()
+        except Exception as error:  # keep cleaning; reported below
+            failures.append(name)
+            logger.error("Cleanup step '%s' failed: %s", name, type(error).__name__)
+
+    def remove_seeded():
+        # Remove only what this scenario seeded, by id (see utils/seed.py).
+        seeded = getattr(context, "seeded_event_ids", [])
+        if seeded:
+            from utils.seed import delete_events
+            logger.info(f"Removed {delete_events(seeded)} seeded event(s)")
+            context.seeded_event_ids = []
+
+    def browser_logs():
+        for log in get_browser_logs(context.driver) or []:
             logger.info(f"Browser log: {log}")
-    
-    # Take screenshot on failure
-    if scenario.status == "failed":
-        take_screenshot(context.driver, f"FAILED_{scenario.name}")
-    
-    # Clean up
-    if hasattr(context, 'driver') and context.driver:
+
+    def failure_screenshot():
+        if scenario.status == "failed":
+            take_screenshot(context.driver, f"FAILED_{scenario.name}")
+
+    def clear_storage():
         # Clear localStorage if we're testing auth
         if 'auth' in scenario.tags or 'login' in scenario.tags:
-            try:
-                context.driver.execute_script("window.localStorage.clear();")
-            except:
-                pass
-        
-        # Quit the driver
-        context.driver.quit()
+            context.driver.execute_script("window.localStorage.clear();")
+
+    def quit_driver():
+        driver = context.driver
         del context.driver
+        driver.quit()
+
+    step("remove seeded events", remove_seeded)
+    if getattr(context, 'driver', None):
+        step("browser logs", browser_logs)
+        step("failure screenshot", failure_screenshot)
+        step("clear storage", clear_storage)
+        step("quit driver", quit_driver)
+
+    if failures:
+        raise RuntimeError(f"cleanup failed in: {', '.join(failures)}")
 
 
 def after_feature(context, feature):
