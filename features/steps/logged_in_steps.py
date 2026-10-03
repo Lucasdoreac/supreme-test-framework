@@ -7,6 +7,7 @@ import requests
 from behave import given, when, then
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -156,3 +157,8 @@ def step_api_refuses_kept_token(context):
         time.sleep(0.5)
     _SESSION.clear()  # the shared session is gone for later scenarios, which must log in again
     assert status == 403, f"the API still accepts the old session token (status {status})"
+
+
+@when("pressiono Enter no campo de email")
+def step_press_enter_in_email(context):
+    context.driver.find_element(*context.login_page.email_input).send_keys(Keys.ENTER)

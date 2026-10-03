@@ -75,6 +75,15 @@ Feature: Telas logadas
     And a tela de login deve avisar que o encerramento não foi confirmado
     And o Auth volta ao ar
 
+  # Web #43: Enter no campo de e-mail envia o formulário (antes só o clique no botão enviava). O e-mail de outro
+  # domínio mostra o erro de validação sem pedir link, então não gasta o limite de pedidos do Auth.
+  @drafts @enter
+  Scenario: Enter envia o formulário de login
+    Given que estou na página de login
+    When insiro "usuario.invalido@gmail.com" no campo de email
+    And pressiono Enter no campo de email
+    Then devo ver uma mensagem de erro indicando o domínio obrigatório
+
   # Último de propósito: encerra no servidor a sessão que os outros cenários reaproveitam.
   @drafts @logout
   Scenario: Sair encerra a sessão no navegador e no servidor
