@@ -49,6 +49,13 @@ def before_scenario(context, scenario):
 
 def after_scenario(context, scenario):
     """Run after each scenario."""
+    # Remove only what this scenario seeded, by id (see utils/seed.py).
+    seeded = getattr(context, "seeded_event_ids", [])
+    if seeded:
+        from utils.seed import delete_events
+        logger.info(f"Removed {delete_events(seeded)} seeded event(s)")
+        context.seeded_event_ids = []
+
     # Capture browser logs
     logs = get_browser_logs(context.driver)
     if logs:
