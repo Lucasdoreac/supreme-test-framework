@@ -6,7 +6,7 @@ Feature: Autenticação com Magic Link
   @auth @login
   Scenario: Login bem-sucedido com magic link
     Given que estou na página de login
-    When insiro "danrley.pereira@udf.edu.br" no campo de email
+    When insiro "e2e-ci@udf.edu.br" no campo de email
     And clico no botão "Próximo"
     And recebo o magic link da API
     And acesso o magic link

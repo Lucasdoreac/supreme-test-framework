@@ -1,11 +1,14 @@
 from typing import Optional
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from .base_page import BasePage
+
+EVENTS_HEADING_LOCATOR = (
+    By.XPATH,
+    "//*[(self::h1 or self::h2) and normalize-space(.)='Meus Eventos']",
+)
 
 
 class LoginPage(BasePage):
@@ -23,8 +26,7 @@ class LoginPage(BasePage):
         # Locators
         self.email_input = (By.NAME, "email")
         self.submit_button = (By.CSS_SELECTOR, "button[type='submit']")
-        self.email_error = (By.CSS_SELECTOR, ".error-message")
-        self.loading_indicator = (By.CSS_SELECTOR, ".loading-spinner")
+        self.email_error = (By.CSS_SELECTOR, "[role='alert']")
     
     def enter_email(self, email: str) -> None:
         """
@@ -38,15 +40,6 @@ class LoginPage(BasePage):
     def click_next(self) -> None:
         """Click the Next/Submit button on the login form"""
         self.click_element(self.submit_button)
-        
-        # Wait for loading indicator to disappear if present
-        try:
-            WebDriverWait(self.driver, 5).until_not(
-                EC.visibility_of_element_located(self.loading_indicator)
-            )
-        except TimeoutException:
-            # Continue if loading indicator isn't found
-            pass
     
     def verify_email_validation(self) -> bool:
         """
@@ -138,10 +131,8 @@ class LoginPage(BasePage):
         Returns:
             True if heading matches, False otherwise
         """
-        heading_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/h2[1]")
-        
         try:
-            heading = self.get_text(heading_locator)
+            heading = self.get_text(EVENTS_HEADING_LOCATOR)
             return heading == "Meus Eventos"
         except (TimeoutException, NoSuchElementException):
             return False
@@ -166,11 +157,14 @@ class LoginPage(BasePage):
         Returns:
             True if email is displayed, False otherwise
         """
-        email_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/p")
-        
         try:
-            email_text = self.get_text(email_locator)
-            return expected_email in email_text
+            paragraphs = self.driver.find_elements(By.TAG_NAME, "p")
+            if any(expected_email in paragraph.text for paragraph in paragraphs):
+                return True
+            return any(
+                element.get_attribute("value") == expected_email
+                for element in self.driver.find_elements(*self.email_input)
+            )
         except (TimeoutException, NoSuchElementException):
             return False
             
@@ -178,5 +172,5 @@ class LoginPage(BasePage):
         """
         Click the button on the events page
         """
-        button_locator = (By.XPATH, "/html/body/div/div/section/div/div/div/div/div/div[2]/div/div/div/button")
+        button_locator = (By.XPATH, "//button[normalize-space(.)='Já Confirmei!']")
         self.click_element(button_locator)
