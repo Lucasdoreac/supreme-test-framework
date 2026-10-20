@@ -15,7 +15,7 @@ cria tokens de autenticação; use somente o banco descartável da pilha de test
 e confira a limpeza do runner.
 
 Para executar os checks sem navegador em um contêiner Linux com Python
-3.14.8 ou superior:
+3.12 ou superior (validado em 3.12 e 3.14.8):
 
 ```sh
 poetry install --no-interaction --no-ansi --no-root
@@ -23,6 +23,8 @@ poetry run pip check
 poetry run python -m unittest discover -s tests -v
 poetry run behave --dry-run
 ```
+
+`requirements.txt` é gerado de `poetry.lock` para instalação via pip; `poetry.lock` continua sendo a fonte de verdade.
 
 O E2E recebe `BASE_URL` (origem vista pelo Chrome), `API_URL` (gateway de
 Auth visto pelo executor) e `SELENIUM_REMOTE_URL` (Grid). Sem Grid, Selenium
