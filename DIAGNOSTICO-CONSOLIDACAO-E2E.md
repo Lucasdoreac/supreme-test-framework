@@ -1,6 +1,6 @@
 # Diagnóstico de consolidação E2E — NÃO PRONTO PARA MERGE
 
-Esta branch, criada a partir de `master` fe09a63c91e8b4e947ce3d1cd5af51b66a03df6d, acrescenta somente este diagnóstico. **Não integra nem resolve os branches**, não altera código, testes, lock, workflows ou configurações. Não execute E2E contra serviços reais a partir deste diagnóstico.
+Esta branch, criada a partir de `master` fe09a63c91e8b4e947ce3d1cd5af51b66a03df6d, acrescenta este diagnóstico e testes unitários sintéticos offline em `tests/offline/`. **Não integra nem resolve os branches**, nem altera código de aplicação, lock, workflows ou configurações. Não execute E2E contra serviços reais a partir deste diagnóstico.
 
 ## Referências comparadas
 
@@ -24,3 +24,8 @@ Esta branch, criada a partir de `master` fe09a63c91e8b4e947ce3d1cd5af51b66a03df6
 Cinco testes unitários sintéticos, executados em Python 3.14.4, extraíram por AST as funções originais `verify_token` (consolidate) e `step_impl_access_magic_link` (logged-in), com driver/page mocks e sem rede: consolidate aceitou o hash e rejeitou token distinto; logged-in aceitou token distinto e clicou Entrar, rejeitou hash igual e rejeitou token ausente. Resultado: **5/5 passaram**. Esta prova mostra divergência de expectativas, não valida o comportamento de uma aplicação real e não é teste da implementação integrada.
 
 Não foram executados Behave, testes da suíte completa, `pip check`, Selenium ou E2E, nem instalações, acessos a banco, emails ou serviços externos. Falta integrar preservando os cenários e testes, resolver os sete conflitos, conferir conflito/duplicação de steps do formulário, revisar segurança e cobertura, validar o lock e executar os testes em stack local descartável antes de retirar o draft.
+
+
+## Atualização: testes offline
+
+O runner e os testes em `tests/offline/` acrescentam regressões unitárias sintéticas; 7 testes passaram localmente no Linux x86_64 com seccomp. Não são testes E2E nem validam a integração ou o contrato de autenticação. Veja `tests/offline/README.md` para os limites do isolamento.
