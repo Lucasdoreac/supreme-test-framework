@@ -1,0 +1,5 @@
+# Regressões offline (draft)
+
+Execute `python3 tests/offline/run.py` em Linux x86_64 com seccomp habilitado. Usa apenas a biblioteca padrão; o runner instala o filtro antes de importar testes e falha se o filtro não puder ser instalado. Bloqueia chamadas de socket e criação de io_uring no processo e filhos. Os testes verificam o bloqueio e sua herança. Não use descoberta unittest direta, pois não instala o filtro.
+
+O filtro não é sandbox para código não confiável: não fecha descritores herdados e não restringe arquivos, processos ou outras formas de IPC; execute em ambiente descartável sem descritores de rede herdados. Não executa Behave, Selenium nem a aplicação e não substitui isolamento da infraestrutura E2E. Os testes carregam `utils/helpers.py` real com dependências HTTP e Selenium simuladas, usando apenas valores sintéticos. A regressão de logs sem endpoint deriva de `test/e2e-logged-in-screens:tests/test_helpers.py`; outros testes caracterizam comportamento legado, sem confirmar contrato de autenticação. Não executar testes E2E contra serviços reais.
